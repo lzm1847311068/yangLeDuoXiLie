@@ -1,0 +1,63 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.0"
+
+    defaultConfig {
+        applicationId "com.example.yangleduo"
+        minSdkVersion 16
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0.8"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true  //是否开启混淆
+            zipAlignEnabled true //优化zip文件
+            shrinkResources true //删除没用的资源文件，需要minifyEnabled开启才会生效
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    applicationVariants.all{ variant->
+        variant.outputs.all { output->
+            if(variant.buildType.name.equals('release')){
+                outputFileName = "养乐多助手v" + defaultConfig.versionName + ".apk"
+            }
+            if(variant.buildType.name.equals('beta')){
+
+            }
+            if(variant.buildType.name.equals('debug')){
+
+            }
+        }
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    //OkHttp
+    implementation 'com.zhousf.lib:okhttp3:2.9.6'
+    implementation 'com.lzy.net:okgo:3.0.4'
+    //OkGo上传下载扩展库hss01248
+    implementation 'com.lzy.net:okserver:2.0.5'
+    //阿里云json工具包
+    implementation 'com.alibaba:fastjson:1.1.70.android'
+}
