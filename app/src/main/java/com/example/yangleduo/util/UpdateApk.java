@@ -22,10 +22,12 @@ import com.lzy.okgo.request.base.Request;
  */
 public class UpdateApk {
 
+//    private static String PT_URL = "yangLeDuo";
+    private static String PT_URL = "xinXin";
 
     public static void update(Activity context){     //http://47.94.255.103
         HttpClient.getInstance().get("/ptVersion/checkUpdate","http://47.94.255.103")
-                .params("ptName","yangLeDuo")
+                .params("ptName",PT_URL)
                 .execute(new StringCallback() {
             @Override
             public void onSuccess(Response<String> response) {

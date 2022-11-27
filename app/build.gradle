@@ -7,11 +7,14 @@ android {
     buildToolsVersion "30.0.0"
 
     defaultConfig {
-        applicationId "com.example.yangleduo"
+//        applicationId "com.example.yangleduo"
+        applicationId "com.example.xinXin"
         minSdkVersion 16
         targetSdkVersion 30
         versionCode 1
-        versionName "1.0.8"
+//        versionName "1.0.8"
+        versionName "1.0"
+
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,7 +35,8 @@ android {
     applicationVariants.all{ variant->
         variant.outputs.all { output->
             if(variant.buildType.name.equals('release')){
-                outputFileName = "养乐多助手v" + defaultConfig.versionName + ".apk"
+                outputFileName = "鑫鑫助手v" + defaultConfig.versionName + ".apk"
+//                outputFileName = "养乐多助手v" + defaultConfig.versionName + ".apk"
             }
             if(variant.buildType.name.equals('beta')){
 

@@ -2,14 +2,22 @@ package com.example.yangleduo;
 
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.AppOpsManager;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -55,7 +63,7 @@ import java.util.Random;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
     private EditText etUname,etPaw;
-    private TextView tvStart,tvStop,tvLog,tvBrow;
+    private TextView tvStart,tvStop,tvLog,tvBrow,tvTitle;
     private Handler mHandler;
     private String token;
     /*
@@ -70,6 +78,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int minPl;
 
 
+
+    /**
+     * 需要更改的地方：
+     * 1、MainActivity
+     * 2、build.gradle配置文件
+     * 3、AndroidMainfest.xml文件
+     * 4、Update文件
+     * 5、KeepAlive文件
+     */
+//    private static final String PT_NAME = "yangLeDuo";
+//    private static final String TITLE = "养乐多助手";
+//    private static final String SUCCESS_TI_SHI = "养乐多接单成功";
+//    private static final String CHANNELID = "yldSuccess";
+//    private static int ICON = R.mipmap.yang_le_duo;
+//    private static final int JIE_DAN_SUCCESS = R.raw.yld_success;
+//    private static final int JIE_DAN_FAIL = R.raw.yld_fail;
+
+
+    private static final String PT_NAME = "xinXin";
+    private static final String TITLE = "鑫鑫助手";
+    private static final String SUCCESS_TI_SHI = "鑫鑫接单成功";
+    private static final String CHANNELID = "xxSuccess";
+    private static int ICON = R.mipmap.yang_le_duo;
+    private static final int JIE_DAN_SUCCESS = R.raw.yld_success;
+    private static final int JIE_DAN_FAIL = R.raw.yld_fail;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,14 +115,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //启动保活服务
         startService(intent);
         ignoreBatteryOptimization();//忽略电池优化
-
         if(!checkFloatPermission(this)){
             //权限请求方法
             requestSettingCanDrawOverlays();
         }
-
         initView();
     }
+
 
     private void initView(){
         //检查更新
@@ -105,6 +139,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvStart = findViewById(R.id.tv_start);
         tvStop = findViewById(R.id.tv_stop);
         tvLog = findViewById(R.id.tv_log);
+        tvTitle = findViewById(R.id.tv_title);
+        tvTitle.setText(TITLE);
         //读取用户信息
         getUserInfo();
         //设置textView为可滚动方式
@@ -172,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void getPtAddress(){
 
         HttpClient.getInstance().get("/ptVersion/checkUpdate","http://47.94.255.103")
-                .params("ptName","yangLeDuo")
+                .params("ptName",PT_NAME)
                 .execute(new StringCallback() {
                     @Override
                     public void onSuccess(Response<String> response) {
@@ -190,14 +226,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             announcementDialog(gongGao);
 
                         }catch (Exception e){
-                            sendLog("获取网址："+e.getMessage());
+                            sendLog("获取网址："+e.getMessage(),1);
                         }
                     }
 
                     @Override
                     public void onError(Response<String> response) {
                         super.onError(response);
-                        sendLog(response.getException().toString());
+                        sendLog(response.getException().toString(),1);
                     }
                 });
     }
@@ -228,26 +264,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if("0".equals(loginJsonObj.getString("code"))){
                                 //保存账号和密码
                                 saveUserInfo(username,password);
-                                sendLog("登录成功，正在检查账号状态是否正常...");
+                                sendLog("登录成功，正在检查账号状态是否正常...",0);
                                 if("1".equals(loginJsonObj.getJSONObject("data").getString("invite_auth"))){
-                                    sendLog("此账号接不到单，请联系师傅处理！");
+                                    sendLog("此账号接不到单，请联系师傅处理！",0);
                                     return;
                                 }
-                                sendLog("账号状态正常");
+                                sendLog("账号状态正常",0);
                                 //获取token
                                 token = loginJsonObj.getJSONObject("data").getString("token");
                                 getTask();
                                 return;
                             }
-                            sendLog(loginJsonObj.getString("msg"));
+                            sendLog(loginJsonObj.getString("msg"),0);
                         }catch (Exception e){
-                            sendLog("登录平台："+e.getMessage());
+                            sendLog("登录平台："+e.getMessage(),1);
                         }
                     }
                     @Override
                     public void onError(Response<String> response) {
                         super.onError(response);
-                        sendLog("登录ERR:"+response.getException().toString());
+                        sendLog("登录ERR:"+response.getException().toString(),1);
                     }
                 });
     }
@@ -264,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         try {
                             String resp = response.body();
                             if(resp.contains("!DOCTYPE")){
-                                sendLog("未知错误,请过几分钟重试...");
+                                sendLog("未知错误,请过几分钟重试...",0);
                                 jieDan();
                                 return;
                             }
@@ -278,21 +314,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if(0 == code){
                                 getTaskInfo();
                             }else if(40009 == code || 40012 == code || 20037 == code || 20038 == code){
-                                sendLog(taskObj.getString("msg"));
-                                playMusic(R.raw.fail,3000,0);
+                                sendLog(taskObj.getString("msg"),0);
+                                playMusic(JIE_DAN_FAIL,3000,0);
                             }else {
-                                sendLog(taskObj.getString("msg"));
+                                sendLog(taskObj.getString("msg"),0);
                                 jieDan();
                             }
                         }catch (Exception e){
-                            sendLog("getTask："+e.getMessage());
+                            sendLog("getTask："+e.getMessage(),1);
                         }
                     }
 
                     @Override
                     public void onError(Response<String> response) {
                         super.onError(response);
-                        sendLog("getTask："+response.getException().toString());
+                        sendLog("getTask："+response.getException().toString(),1);
                         jieDan();
                     }
                 });
@@ -323,22 +359,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             JSONArray jsonArray = obj.getJSONObject("data").getJSONArray("list");
                             JSONObject taskObj = jsonArray.getJSONObject(0);
 //                        Double comm = Double.parseDouble(taskObj.getString("brokerage"));
-                            playMusic(R.raw.success,3000,2);
-                            sendLog(obj.getString("msg"));
-                            sendLog("-------------------------------");
-                            sendLog("任务关键词："+taskObj.getString("goods_key"));
-                            sendLog("-------------------------------");
+                            playMusic(JIE_DAN_SUCCESS,3000,2);
+                            sendLog(obj.getString("msg"),1);
+                            receiveSuccess();
+                            sendLog("-------------------------------",1);
+                            sendLog("任务关键词："+taskObj.getString("goods_key"),1);
+                            sendLog("-------------------------------",1);
                             getShangPinUrl(taskObj.getString("order_id"));
                             // cancel(taskObj.getString("order_id"));
                         }catch (Exception e){
-                            sendLog("getTaskInfo："+e.getMessage());
+                            sendLog("getTaskInfo："+e.getMessage(),1);
                         }
                     }
 
                     @Override
                     public void onError(Response<String> response) {
                         super.onError(response);
-                        sendLog("任务详情出错~"+response.getException());
+                        sendLog("任务详情出错~"+response.getException(),1);
                     }
                 });
     }
@@ -355,16 +392,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         try {
                             JSONObject obj = JSONObject.parseObject(response.body());
                             String url = obj.getJSONObject("data").getJSONObject("goods").getString("main_img");
-                            sendLog("商品图（复制网址浏览器打开）："+url);
+                            sendLog("商品图（复制网址浏览器打开）："+url,1);
                         }catch (Exception e){
-                            sendLog("getShangPinUrl:"+e.getMessage());
+                            sendLog("getShangPinUrl:"+e.getMessage(),1);
                         }
                     }
 
                     @Override
                     public void onError(Response<String> response) {
                         super.onError(response);
-                        sendLog("获取任务链接出错啦,正在重试~");
+                        sendLog("获取任务链接出错啦,正在重试~",1);
                     }
                 });
     }
@@ -387,7 +424,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onError(Response<String> response) {
                         super.onError(response);
-                        sendLog("取消任务详情出错啦,正在重试~");
+                        sendLog("取消任务详情出错啦,正在重试~",1);
                         jieDan();
                     }
                 });
@@ -467,7 +504,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         OkGo.getInstance().cancelAll();
         //Handler中已经提供了一个removeCallbacksAndMessages去清除Message和Runnable
         mHandler.removeCallbacksAndMessages(null);
-        sendLog("已停止接单");
+        sendLog("已停止接单",0);
     }
 
 
@@ -504,9 +541,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * 日志更新
      * @param log
      */
-    public void sendLog(String log){
+    public void sendLog(String log,int type){
         scrollToTvLog();
+        if(0 == type){
+            if(tvLog.getLineCount() > 40){
+                tvLog.setText("");
+            }
+        }
         tvLog.append(new SimpleDateFormat("HH:mm:ss").format(new Date()) + ": "+log+"\n");
+    }
+
+
+
+    /**
+     * 接单成功执行逻辑
+     */
+    protected void receiveSuccess(){
+        //前台通知的id名，任意
+        String channelId = CHANNELID;
+        //前台通知的名称，任意
+        String channelName = "接单成功状态栏通知";
+        //发送通知的等级，此处为高，根据业务情况而定
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+
+        // 2. 获取系统的通知管理器
+        NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        // 3. 创建NotificationChannel(这里传入的channelId要和创建的通知channelId一致，才能为指定通知建立通知渠道)
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
+            NotificationChannel channel = new NotificationChannel(channelId,channelName, importance);
+            channel.setLightColor(Color.BLUE);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            notificationManager.createNotificationChannel(channel);
+        }
+        //点击通知时可进入的Activity
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
+        // 1. 创建一个通知(必须设置channelId)
+        @SuppressLint("WrongConstant") Notification notification = new NotificationCompat.Builder(this,channelId)
+                .setContentTitle(SUCCESS_TI_SHI)
+                .setContentText(SUCCESS_TI_SHI)
+                .setSmallIcon(ICON)
+                .setContentIntent(pendingIntent)//点击通知进入Activity
+                .setPriority(NotificationCompat.PRIORITY_MAX) //设置通知的优先级为最大
+                .setCategory(Notification.CATEGORY_TRANSPORT) //设置通知类别
+                .setVisibility(Notification.VISIBILITY_PUBLIC)  //控制锁定屏幕中通知的可见详情级别
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(),ICON))   //设置大图标
+                .build();
+
+        // 4. 发送通知
+        notificationManager.notify(2, notification);
     }
 
 

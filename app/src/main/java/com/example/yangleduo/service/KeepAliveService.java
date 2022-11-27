@@ -29,6 +29,16 @@ import com.example.yangleduo.R;
  */
 public class KeepAliveService extends Service {
 
+
+//    private static String SUCCESS_TI_SHI = "养乐多助手";
+//    private static int ICON = R.mipmap.yang_le_duo;
+//    private static String CHANNELID = "yld";
+
+    private static String SUCCESS_TI_SHI = "鑫鑫助手";
+    private static int ICON = R.mipmap.yang_le_duo;
+    private static String CHANNELID = "xx";
+
+
     private MediaPlayer mMediaPlayer;
     private AudioManager mAudioManager;
     private PowerManager.WakeLock wakeLock;
@@ -87,7 +97,7 @@ public class KeepAliveService extends Service {
     @SuppressLint("WrongConstant")
     private Notification createForegroundNotification(){
         //前台通知的id名，任意
-        String channelId = "yld";
+        String channelId = CHANNELID;
         //前台通知的名称，任意
         String channelName = "保持后台运行";
         //发送通知的等级，此处为高，根据业务情况而定
@@ -111,15 +121,15 @@ public class KeepAliveService extends Service {
         //注释部分是可扩展的参数，根据自己的功能需求添加
         //可参考：https://www.cnblogs.com/stars-one/p/8371051.html
         return new NotificationCompat.Builder(this,channelId)
-                .setContentTitle("养乐多助手")
+                .setContentTitle(SUCCESS_TI_SHI)
                 .setContentText("运行中...")
-                .setSmallIcon(R.mipmap.index)//通知显示的图标
+                .setSmallIcon(ICON)//通知显示的图标
                 .setContentIntent(pendingIntent)//点击通知进入Activity
                 .setPriority(NotificationCompat.PRIORITY_MAX) //设置通知的优先级为最大
                 .setCategory(Notification.CATEGORY_TRANSPORT) //设置通知类别
                 .setOngoing(true) //设置它为一个正在进行的通知，通常表示一个后台任务
                 .setVisibility(Notification.VISIBILITY_PUBLIC)  //控制锁定屏幕中通知的可见详情级别
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.index))  //设置下拉列表中的图标（大图标）
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(),ICON))  //设置下拉列表中的图标（大图标）
                 .build();
     }
 
